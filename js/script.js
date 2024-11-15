@@ -199,7 +199,7 @@ class Game {
         }, this.frameRate);
     }
     stopInvertal() {
-        clearInterval(this.interval)
+        clearInterval(this.interval);
     }
 }
 
