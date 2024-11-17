@@ -1,19 +1,19 @@
 class Game {
-    constructor(frameRate) {
-        this.frameRate = frameRate;
-        this.game = document.createElement("div");
-        this.game.style.backgroundColor = "#000000";
-        this.game.style.width = "100vw";
-        this.game.style.height = "100vh";
-        document.body.appendChild(this.game);
+    constructor(config) {
+        this.config = config;
+        globalThis.game = document.createElement("div");
+        globalThis.game.style.backgroundColor = "#000000";
+        globalThis.game.style.width = "100vw";
+        globalThis.game.style.height = "100vh";
+        document.body.appendChild(globalThis.game);
         class Wall {
-            constructor(game, width, height, left, top) {
+            constructor(wallConfig) {
                 this.wall = document.createElement('div');
-                this.wall.style.width = `${width}`;
-                this.wall.style.height = `${height}`;
-                this.wall.style.left = `${left}`;
-                this.wall.style.top = `${top}`;
-                game.appendChild(this.wall);
+                this.wall.style.width = `${wallConfig.width}`;
+                this.wall.style.height = `${wallConfig.height}`;
+                this.wall.style.left = `${wallConfig.positionX}`;
+                this.wall.style.top = `${wallConfig.positionY}`;
+                globalThis.game.appendChild(this.wall);
                 this.width = this.wall.offsetWidth;
                 this.height = this.wall.offsetHeight;
                 this.wall.style.position = 'absolute';
@@ -21,7 +21,10 @@ class Game {
                 this.positionY = this.wall.offsetTop;
                 this.wall.style.backgroundColor = `grey`;
                 this.wall.style.opacity = '0.8';
-                //this.tray();
+
+                if (wallConfig.movement == `tray`) {
+                    this.tray();
+                }
             }
             tray() {
                 document.addEventListener('mousemove', (event) => {
@@ -33,20 +36,25 @@ class Game {
             }
         }
         class Ball {
-            constructor(game) {
+            constructor(ballConfig) {
                 this.ball = document.createElement("div");
-                this.size = 50;
+                this.size = ballConfig.constructor.size;
                 this.ball.style.width = `${this.size}px`;
                 this.ball.style.height = `${this.size}px`;
                 this.ball.style.borderRadius = "100%";
                 this.ball.style.position = "absolute";
                 this.ball.style.opacity = '0.7';
-                game.appendChild(this.ball);
+                globalThis.game.appendChild(this.ball);
                 this.ball.style.backgroundColor = "#ffffff";
-                this.counter = [5, 3];
-                this.countRange = [[1, 7], [1, 7]];
+                this.counter = ballConfig.acceleration.speed;
+                this.countRange = ballConfig.acceleration.range;
                 this.direction = [1, 1];
-                this.positionX = this.positionY = 1;
+                this.positionX = ballConfig.constructor.spawnPosition.X;
+                this.positionY = ballConfig.constructor.spawnPosition.Y;
+                this.acceleration = {
+                    "type": "constant",
+
+                }
             }
             checkDirection(frameWidth, frameHeight, walls) {
 
@@ -154,22 +162,21 @@ class Game {
             }
         }
 
-        this.balls = [];
-
-        for (let i = 0; i < 30; i++) {
-            this.balls.push(new Ball(this.game));
+        if (this.config.devMode) {
+            this.devMode();
         }
 
+        this.balls = [];
+        for (let item of config.balls) {
+            this.balls.push(new Ball(item));
+        }
+       
 
-        this.walls = [
-            new Wall(this.game, `3px`, `100vh`, `-3px`, `0`),
-            new Wall(this.game, `3px`, `100vh`, `100vw`, `0`),
-            new Wall(this.game, `100vw`, `3px`, `0`, `-3px`),
-            new Wall(this.game, `100vw`, `3px`, `0`, `100vh`),
 
-            new Wall(this.game, `10px`, `66vh`, `33vw`, 0),
-            new Wall(this.game, `10px`, `66vh`, `66vw`, `34vh`)
-        ];
+        this.walls = [];
+        for (let item of config.walls) {
+            this.walls.push(new Wall(item));
+        }
 
         this.startInvertal();
 
@@ -185,23 +192,109 @@ class Game {
     startInvertal() {
         this.interval = setInterval(() => {
             requestAnimationFrame(() => {
-                if (this.balls[0] == undefined) {
-                    this.balls.checkDirection(this.game.offsetWidth, this.game.offsetHeight, this.walls)
-                    this.balls.move();
+
+                for (let item of this.balls) {
+                    item.checkDirection(globalThis.game.offsetWidth, globalThis.game.offsetHeight, this.walls)
+                    item.move();
                 }
-                else {
-                    for (let item of this.balls) {
-                        item.checkDirection(this.game.offsetWidth, this.game.offsetHeight, this.walls)
-                        item.move();
-                    }
-                }
+
             })
-        }, this.frameRate);
+        }, this.config.frameRate);
     }
     stopInvertal() {
         clearInterval(this.interval);
     }
+    devMode(comand) {
+        class Panel {
+            constructor() {
+                this.panel = document.createElement('div');
+                this.panel.style.width = '100px';
+                this.panel.style.height = '50px';
+                this.panel.style.position = 'absolute';
+                this.panel.style.top = 0;
+                this.panel.style.right = 0;
+                this.panel.style.backgroundColor = 'grey';
+                this.panel.innerHTML = 'none';
+                document.body.appendChild(this.panel);
+            }
+
+
+        }
+    }
 }
 
-let game = new Game(5);
 
+let game = new Game({
+    frameRate: 5,
+    devMode: true,
+    walls: [
+        {
+            width: `3px`,
+            height: `100vh`,
+            positionX: `-3px`,
+            positionY: `0`,
+            movement: 'static'
+        },
+        {
+            width: `3px`,
+            height: `100vh`,
+            positionX: `100vw`,
+            positionY: `0`,
+            movement: 'static'
+        },
+        {
+            width: `100vw`,
+            height: `3px`,
+            positionX: `0`,
+            positionY: `-3px`,
+            movement: 'static'
+        },
+        {
+            width: `100vw`,
+            height: `3px`,
+            positionX: `0`,
+            positionY: `100vh`,
+            movement: 'static'
+        },
+
+
+        {
+            width: `10px`,
+            height: `66vh`,
+            positionX: `33vw`,
+            positionY: `0`,
+            movement: 'static'
+        },
+        {
+            width: `10px`,
+            height: `66vh`,
+            positionX: `66vw`,
+            positionY: `34vh`,
+            movement: 'static'
+        },
+        {
+            width: `50px`,
+            height: `50px`,
+            positionX: `50vw`,
+            positionY: `50vh`,
+            movement: 'tray'
+        },
+    ],
+    "balls": [
+        {
+            constructor: {
+                size: 50,
+                spawnPosition: {
+                    "X": 50,
+                    "Y": 50
+                }
+            },
+            acceleration: {
+                type: "linear",
+                speed: [3, 3],
+                range: [[3, 5], [2, 5]]
+            },
+        },
+        
+    ]
+});
