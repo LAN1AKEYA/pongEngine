@@ -37,6 +37,7 @@ class Game {
         }
         class Ball {
             constructor(ballConfig) {
+                this.ballConfig = ballConfig;
                 this.ball = document.createElement("div");
                 this.size = ballConfig.constructor.size;
                 this.ball.style.width = `${this.size}px`;
@@ -51,10 +52,7 @@ class Game {
                 this.direction = [1, 1];
                 this.positionX = ballConfig.constructor.spawnPosition.X;
                 this.positionY = ballConfig.constructor.spawnPosition.Y;
-                this.acceleration = {
-                    "type": "constant",
-
-                }
+                console.log(ballConfig.acceleration)
             }
             checkDirection(frameWidth, frameHeight, walls) {
 
@@ -192,12 +190,10 @@ class Game {
     startInvertal() {
         this.interval = setInterval(() => {
             requestAnimationFrame(() => {
-
                 for (let item of this.balls) {
                     item.checkDirection(globalThis.game.offsetWidth, globalThis.game.offsetHeight, this.walls)
                     item.move();
                 }
-
             })
         }, this.config.frameRate);
     }
